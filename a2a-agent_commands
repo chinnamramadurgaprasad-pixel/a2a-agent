@@ -1,0 +1,15 @@
+## To run the django code
+cd a2a-agent/registry
+py manage.py runserver
+
+## To run the ui code 
+cd a2a-agent/ui
+streamlit run app.py
+
+## To run the math_agent
+cd a2a-agent/agents/math_agent
+python app.py
+
+## To run the summarizer_agent
+cd a2a-agent/agents/summarizer_agent
+python app.py
