@@ -1,60 +1,69 @@
 import streamlit as st
 import requests
 
-st.title("Agent Marketplace")
+st.title(" A2A Agent Marketplace")
 
-# -------------------
-# Agent Directory
-# -------------------
-agents = requests.get("http://localhost:8000/api/agents/list").json()
+# SELECT TASK TYPE
+st.header("Choose Task")
 
-st.header("Agent Directory")
-for agent in agents:
-    st.write(f"{agent['name']} → {agent['capabilities']}")
-
-# -------------------
-# Send Task
-# -------------------
-st.header("Send Task")
-
-capability = st.selectbox("Capability", ["math", "summarization", "search"])
+capability = st.selectbox(
+    "Select Capability",
+    ["math", "summarization", "search"]
+)
 
 user_input = st.text_area("Enter your input")
 
-# Optional params
-precision = st.number_input("Precision (math only)", value=2)
+# SEND TASK
+if st.button("Submit Task"):
 
-if st.button("Send"):
-
-    payload = {
-        "capability": capability,
-        "input": {
-            "text": user_input,
-            "params": {
-                "precision": precision
-            }
-        },
-        "context": {
-            "source": "streamlit_ui"
+    if not user_input.strip():
+        st.warning("Please enter input")
+    else:
+        payload = {
+            "capability": capability,
+            "input": {
+                "text": user_input
+            },
+            "context": {}
         }
-    }
 
-    res = requests.post(
-        "http://localhost:8000/api/orchestrate/",
-        json=payload
-    )
+        try:
+            res = requests.post(
+                "http://127.0.0.1:8000/api/orchestrate/",
+                json=payload
+            )
 
-    st.json(res.json())
+            if res.status_code != 200:
+                st.error(f"Server error: {res.status_code}")
+            else:
+                data = res.json()
 
-# -------------------
-# Task History
-# -------------------
-st.header("Task History")
+                # HANDLE RESPONSE
+                if data.get("status") == "error":
+                    st.error(data.get("error"))
 
-tasks = requests.get("http://localhost:8000/api/tasks/").json()
+                else:
+                    result = data.get("result")
+                    st.subheader("Result")
 
-for t in tasks:
-    st.write(f"Task: {t['task_id']}")
-    st.write(f"Input: {t['input']}")
-    st.write(f"Result: {t['result']}")
-    st.write("---")
+                    # SEARCH OUTPUT
+                    if capability == "search" and isinstance(result, list):
+                        for item in result:
+                            st.markdown(f"### 🔗 {item.get('title')}")
+                            st.write(item.get("snippet"))
+                            st.markdown(f"[Open Link]({item.get('link')})")
+                            st.write("---")
+
+                    #  MATH OUTPUT
+                    elif capability == "math":
+                        st.success(result)
+
+                    # SUMMARIZATION OUTPUT
+                    elif capability == "summarization":
+                        st.info(result)
+
+                    else:
+                        st.write(result)
+
+        except Exception as e:
+            st.error(f"Request failed: {e}")

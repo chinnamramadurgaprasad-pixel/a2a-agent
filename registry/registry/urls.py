@@ -19,7 +19,6 @@ from django.urls import path, include
 from orchestrator.views import handle_task, list_tasks
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('api/agents/', include('agents_registry.urls')),
     path('api/orchestrate/', handle_task),
     path('api/tasks/', list_tasks),

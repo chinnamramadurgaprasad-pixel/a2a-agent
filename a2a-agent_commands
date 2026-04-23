@@ -13,3 +13,7 @@ python app.py
 ## To run the summarizer_agent
 cd a2a-agent/agents/summarizer_agent
 python app.py
+
+## To run the gateway
+cd a2a-agent/gateway/mcp_gateway
+python app.py
