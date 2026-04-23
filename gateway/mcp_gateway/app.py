@@ -10,8 +10,22 @@ app = Flask(__name__)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
 
-@app.route('/execute', methods=['POST'])
+if not GOOGLE_API_KEY or not GOOGLE_CSE_ID:
+    raise ValueError("Missing API keys")
+
+@app.route('/')
+def home():
+    return {
+        "message": "Search Agent Running",
+        "endpoint": "/execute (POST)"
+    }
+
+@app.route('/execute', methods=['GET', 'POST'])
 def execute():
+
+    if request.method == "GET":
+        return {"message": "Use POST method"}
+
     data = request.json
     task_id = data.get("task_id")
     query = data.get("input", {}).get("text", "")
@@ -22,7 +36,7 @@ def execute():
         return jsonify({
             "task_id": task_id,
             "status": "success",
-            "result": results,   # ✅ LIST OF OBJECTS
+            "result": results,
             "error": None
         })
 
@@ -51,13 +65,14 @@ def google_search(query):
 
     data = res.json()
 
-    results = []
-
-    for item in data.get("items", [])[:5]:   # top 5 results
-        results.append({
+    return [
+        {
             "title": item.get("title"),
             "link": item.get("link"),
             "snippet": item.get("snippet")
-        })
+        }
+        for item in data.get("items", [])[:5]
+    ]
 
-    return results
+if __name__ == '__main__':
+    app.run(port=8003)
